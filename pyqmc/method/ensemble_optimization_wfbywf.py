@@ -264,8 +264,10 @@ def optimize_ensemble(
     client=None,
     verbose=False,
     vmc_kwargs={},
-    initial_warmup_kwargs={},
-    refresh_warmup_kwargs={},
+    initial_overlap_warmup_kwargs={},
+    initial_vmc_warmup_kwargs={},
+    refresh_overlap_warmup_kwargs={},
+    refresh_vmc_warmup_kwargs={},
 ):
     """Optimize a set of wave functions using ensemble VMC.
 
@@ -308,7 +310,7 @@ def optimize_ensemble(
         norm_configs,
         client=client,
         npartitions=npartitions,
-        kwargs=initial_warmup_kwargs,
+        kwargs=initial_overlap_warmup_kwargs,
     )
 
     # state-specific distributions: rho_VMC,i ~ |Psi_i|^2; used for state-i energy sampling
@@ -320,7 +322,7 @@ def optimize_ensemble(
             cfg,
             client=client,
             npartitions=npartitions,
-            kwargs=initial_warmup_kwargs,
+            kwargs=initial_vmc_warmup_kwargs,
         )
         vmc_configs.append(cfg)
 
@@ -336,7 +338,7 @@ def optimize_ensemble(
             cfg,
             client=client,
             npartitions=npartitions,
-            kwargs=initial_warmup_kwargs,
+            kwargs=initial_overlap_warmup_kwargs,
         )
         overlap_configs[wfi] = cfg
     if nwf >= 2:
@@ -358,7 +360,7 @@ def optimize_ensemble(
                     norm_configs,
                     client=client,
                     npartitions=npartitions,
-                    kwargs=refresh_warmup_kwargs,
+                    kwargs=refresh_overlap_warmup_kwargs,
                 )
                 _, data_unweighted, norm_configs = (
                     pyqmc.method.sample_many.sample_overlap(
@@ -381,7 +383,7 @@ def optimize_ensemble(
                     vmc_configs[wfi],
                     client=client,
                     npartitions=npartitions,
-                    kwargs=refresh_warmup_kwargs,
+                    kwargs=refresh_vmc_warmup_kwargs,
                 )
                 data_sample1, vmc_configs[wfi] = pyqmc.method.mc.vmc(
                     wf,
@@ -398,7 +400,7 @@ def optimize_ensemble(
                     overlap_configs[wfi],
                     client=client,
                     npartitions=npartitions,
-                    kwargs=refresh_warmup_kwargs,
+                    kwargs=refresh_overlap_warmup_kwargs,
                 )
                 data_weighted, data_unweighted, overlap_configs[wfi] = (
                     pyqmc.method.sample_many.sample_overlap(
@@ -442,7 +444,7 @@ def optimize_ensemble(
                     "wavefunction": wfi,
                     "sub_iteration": sub_iteration,
                 }
-                hdf_save(hdf_file, save_data, {"tau": tau}, wfs, configs)
+                hdf_save(hdf_file, save_data, {"tau": tau}, wfs, norm_configs)
             sub_iteration_offset = 0
         wf_start = 0
 
